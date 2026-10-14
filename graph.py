@@ -49,8 +49,13 @@ PROMPT_SUPERVISOR = (
     "Reglas para decidir:\n"
     "- Si todavía no hay ninguna investigación hecha, mandá al "
     "Investigador.\n"
-    "- Si ya hay una investigación pero todavía no hay un análisis sobre "
-    "ella, mandá al Analista.\n"
+    "- Si ya hay una investigación (SIN IMPORTAR si encontró muchas, "
+    "pocas o CERO noticias -- una investigación con 0 resultados sigue "
+    "siendo una investigación ya hecha) pero todavía no hay un análisis "
+    "sobre ella, mandá al Analista. NO vuelvas a mandar al Investigador "
+    "solo porque la búsqueda encontró pocos o ningún resultado: esa "
+    "decisión (si hace falta refinar la búsqueda) le corresponde "
+    "únicamente al Analista, marcando el análisis como insuficiente.\n"
     "- Si el análisis dice que fue insuficiente (no había noticias para "
     "analizar), mandá de nuevo al Investigador para que intente con un "
     "término de búsqueda más amplio -- esto es un refinamiento, no un "
@@ -94,10 +99,33 @@ DecisorType = Callable[[AgentState], Awaitable[str]]
 
 
 def _construir_decisor_default(modelo) -> DecisorType:
-    """Decisor de producción: usa salida estructurada del LLM."""
+    """Decisor de producción: usa salida estructurada del LLM, con una
+    red de seguridad para las dos transiciones que son 100% deterministas
+    a partir del estado (no requieren ningún "criterio" del LLM):
+
+    - Si todavía no hay investigación, el siguiente paso SIEMPRE es el
+      Investigador.
+    - Si ya hay una investigación pero todavía no hay análisis, el
+      siguiente paso SIEMPRE es el Analista -- pase lo que pase con la
+      cantidad de noticias encontradas.
+
+    En la práctica, un LLM real a veces "reinterpreta" mal la segunda
+    regla cuando la investigación encontró 0 noticias (razona que hay que
+    volver a buscar, en vez de dejar que sea el Analista el que marque el
+    resultado como insuficiente). Resolver estos dos casos en código
+    evita ese error de interpretación y además ahorra una llamada al LLM
+    en los pasos donde no hace falta ningún criterio real. El LLM solo
+    interviene en la decisión que sí requiere juicio: una vez que hay
+    análisis, si conviene refinar o finalizar.
+    """
     llm_ruteo = modelo.with_structured_output(DecisionSupervisor)
 
     async def decidir(state: AgentState) -> str:
+        if state.get("investigacion") is None:
+            return "Investigador"
+        if state.get("analisis") is None:
+            return "Analista"
+
         mensajes = [
             SystemMessage(content=PROMPT_SUPERVISOR),
             HumanMessage(content=_resumen_estado(state)),

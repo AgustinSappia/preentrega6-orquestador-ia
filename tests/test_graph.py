@@ -16,7 +16,8 @@ Cubre los tres escenarios pedidos por la consigna:
 from langchain_core.messages import AIMessage
 
 from agents.research_agent import _NOTICIAS_IA
-from graph import construir_grafo, ejecutar_orquestador
+from graph import _construir_decisor_default, construir_grafo, ejecutar_orquestador
+from state import ResultadoInvestigacion
 from tests.fakes import ModeloFalso
 
 
@@ -153,3 +154,45 @@ async def test_corte_por_contador_de_pasos():
     # colgarse en un ciclo infinito.
     assert resultado["pasos"] == 4  # max_pasos=3 -> se corta al pisar el paso 4
     assert resultado["task_completed"] is True
+
+
+# ---------------------------------------------------------------------------
+# Red de seguridad del decisor de producción.
+# ---------------------------------------------------------------------------
+class _ModeloQueExplotaSiLoLlaman:
+    """Doble de prueba que levanta una excepción si alguna vez se le pide
+    una decisión estructurada al LLM -- sirve para comprobar que el
+    decisor de producción NO llama al LLM en las dos transiciones que son
+    100% deterministas a partir del estado."""
+
+    def with_structured_output(self, schema):
+        async def _nunca_deberia_llamarse(*args, **kwargs):
+            raise AssertionError(
+                "No debería haberse llamado al LLM para una transición determinista."
+            )
+
+        class _Wrapper:
+            ainvoke = staticmethod(_nunca_deberia_llamarse)
+
+        return _Wrapper()
+
+
+async def test_decisor_default_no_consulta_al_llm_si_falta_investigacion():
+    """Esta es la red de seguridad agregada después de que, en una corrida
+    real, un LLM real malinterpretó la regla 'si hay investigación con 0
+    resultados, igual hay que pasar al Analista' y volvió a mandar al
+    Investigador en bucle. Estas dos transiciones ahora se resuelven en
+    código, sin depender de que el LLM las interprete bien."""
+    decidir = _construir_decisor_default(_ModeloQueExplotaSiLoLlaman())
+    estado = {"investigacion": None, "analisis": None}
+    assert await decidir(estado) == "Investigador"
+
+
+async def test_decisor_default_no_consulta_al_llm_si_falta_analisis():
+    """Incluye el caso crítico: una investigación con 0 noticias encontradas
+    sigue contando como 'ya hay investigación' -- tiene que pasar al
+    Analista, no volver al Investigador."""
+    decidir = _construir_decisor_default(_ModeloQueExplotaSiLoLlaman())
+    investigacion_vacia = ResultadoInvestigacion(tema_buscado="x", noticias=[])
+    estado = {"investigacion": investigacion_vacia, "analisis": None}
+    assert await decidir(estado) == "Analista"

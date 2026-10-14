@@ -155,6 +155,32 @@ Supervisor seguiría viendo el análisis insuficiente *viejo* y mandaría al
 Investigador en bucle en vez de pasar al Analista con los resultados
 nuevos.
 
+## Por qué el Supervisor no delega TODO en el LLM
+
+En una corrida real (con un LLM de verdad, no el modelo falso de los
+tests) el Supervisor llegó a malinterpretar la regla "si ya hay una
+investigación pero no hay análisis, mandá al Analista": al ver que la
+investigación había encontrado 0 noticias, el LLM razonó que convenía
+volver a mandar al Investigador -- en vez de dejar que fuera el Analista
+el que marcara el resultado como insuficiente. El síntoma fue que el
+grafo se quedaba dando vueltas entre "Supervisor" e "Investigador" hasta
+cortar por el contador de pasos, sin llegar nunca a `analisis`.
+
+La solución no fue "ajustar un poco el prompt y cruzar los dedos": de las
+3 reglas de ruteo del Supervisor, 2 son completamente deterministas a
+partir del estado (no necesitan ningún criterio del LLM, son un simple
+`if`) y solo 1 requiere una decisión real. `_construir_decisor_default()`
+en `graph.py` resuelve en código esas 2 transiciones sin ambigüedad --
+"si no hay investigación, Investigador" y "si hay investigación pero no
+análisis, Analista, sin importar cuántas noticias haya encontrado" -- y
+deja que el LLM decida únicamente el caso que sí amerita juicio: una vez
+que ya hay un análisis, si conviene refinar o finalizar. Esto reduce
+además la cantidad de llamadas al LLM (y por lo tanto el costo) sin
+perder la parte "inteligente" de la decisión. Hay un test específico
+(`test_decisor_default_no_consulta_al_llm_si_falta_analisis` en
+`tests/test_graph.py`) que falla a propósito si alguna vez se vuelve a
+llamar al LLM para una de estas dos transiciones deterministas.
+
 ## Cómo correr el proyecto
 
 ```bash
