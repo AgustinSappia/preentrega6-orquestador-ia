@@ -1,0 +1,17 @@
+# Secretos -- nunca subir la API key real.
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs propios de la ejecución
+logs/*.json
+
+# Entornos virtuales
+.venv/
+venv/

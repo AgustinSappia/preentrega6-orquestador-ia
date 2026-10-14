@@ -1,0 +1,15 @@
+langgraph>=1.2.12
+langchain-core>=1.6.6
+langchain-openai>=1.6.7
+langchain-anthropic>=1.7.5
+pydantic>=2.13.5
+python-dotenv>=1.2.3
+
+# Para correr la suite de tests (no hace falta ninguna API key: usan un
+# modelo falso inyectado).
+pytest>=9.1.1
+pytest-asyncio>=1.4.0
+
+# Para poder abrir/correr el notebook de demo.
+notebook
+nbformat>=5.11.1

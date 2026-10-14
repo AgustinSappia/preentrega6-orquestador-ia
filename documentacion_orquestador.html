@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-entrega 6: Orquestador multi-agente especializado</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --panel: #ffffff;
+    --border: #e0ddd5;
+    --text: #2b2a28;
+    --muted: #6b6960;
+    --amarillo: #b8860b;
+    --amarillo-bg: #fff8e1;
+    --verde: #2e7d32;
+    --verde-bg: #eaf6ec;
+    --azul: #1565c0;
+    --azul-bg: #eaf1fb;
+    --rojo: #c62828;
+    --rojo-bg: #fdecea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  header.top {
+    margin-bottom: 36px;
+  }
+  header.top .kicker {
+    color: var(--muted);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 10px;
+  }
+  .lead {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 720px;
+  }
+  .context-box {
+    background: var(--amarillo-bg);
+    border: 1px solid var(--amarillo);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 22px 0 10px;
+    font-size: 14.5px;
+  }
+  .context-box strong { color: var(--amarillo); }
+  section {
+    margin: 48px 0;
+  }
+  section h2 {
+    font-size: 21px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 18px;
+  }
+  section h3 {
+    font-size: 16.5px;
+    margin: 26px 0 10px;
+  }
+  p { margin: 10px 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .diagram {
+    overflow-x: auto;
+    text-align: center;
+    padding: 10px 0;
+  }
+  .diagram svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin: 16px 0 0;
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .legend .item { display: flex; align-items: center; gap: 8px; }
+  .swatch {
+    width: 14px; height: 14px; border-radius: 4px; display: inline-block; flex-shrink: 0;
+  }
+  .sw-amarillo { background: var(--amarillo-bg); border: 2px solid var(--amarillo); }
+  .sw-verde { background: var(--verde-bg); border: 2px solid var(--verde); }
+  .sw-azul { background: var(--azul-bg); border: 2px solid var(--azul); }
+  .sw-gris { background: #e8e8e8; border: 2px solid #888888; }
+  .sw-rojo { background: var(--rojo-bg); border: 2px solid var(--rojo); }
+  ol.steps, ul.steps {
+    padding-left: 22px;
+  }
+  ol.steps li, ul.steps li {
+    margin: 8px 0;
+  }
+  code, .code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: #f1efe9;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.92em;
+  }
+  pre code {
+    display: block;
+    padding: 14px 16px;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .callout {
+    border-left: 4px solid var(--rojo);
+    background: var(--rojo-bg);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 14.5px;
+    margin: 18px 0;
+  }
+  .callout.good {
+    border-left-color: var(--verde);
+    background: var(--verde-bg);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 12px 0;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f1ea; }
+  footer {
+    margin-top: 60px;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 720px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="kicker">Curso de AI Engineering (Coderhouse) · Pre-entrega 6</div>
+    <h1>Orquestador multi-agente especializado</h1>
+    <p class="lead">
+      Documentación visual del sistema construido con LangGraph: un
+      Supervisor que delega dinámicamente entre dos agentes especialistas
+      para investigar y analizar el sentimiento de noticias de
+      Inteligencia Artificial.
+    </p>
+  </header>
+
+  <div class="context-box">
+    <strong>Contexto para quien vea esto sin haber visto el resto del
+    proyecto:</strong> este documento acompaña un proyecto de código
+    (carpeta <code>preentrega6/</code>) que implementa un sistema
+    multi-agente jerárquico con <a href="https://langchain-ai.github.io/langgraph/" target="_blank" rel="noopener">LangGraph</a>.
+    Un nodo "Supervisor" decide en cada paso si hay que investigar más
+    noticias, analizarlas, o si la tarea ya está completa. Los diagramas de
+    abajo son <strong>el mapa de ese flujo</strong>: no hace falta haber
+    leído el código ni ninguna conversación previa para entenderlos --
+    cada uno trae su propia leyenda y explicación paso a paso.
+  </div>
+
+  <section id="arquitectura">
+    <h2>1. Arquitectura general: Supervisor + especialistas</h2>
+    <p>
+      El sistema usa una topología <strong>jerárquica</strong>: un único
+      nodo "Supervisor" concentra toda la lógica de ruteo, y dos agentes
+      especialistas (Investigador y Analista) hacen el trabajo concreto sin
+      hablar nunca entre ellos -- siempre vuelven a reportarle al
+      Supervisor. Esto es lo opuesto a, por ejemplo, un pipeline fijo
+      (Investigador → Analista → fin, siempre en ese orden): acá la
+      cantidad de vueltas que da el proceso depende de lo que se vaya
+      encontrando.
+    </p>
+    <div class="panel">
+      <div class="diagram">
+        <!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: GrafoPrincipal Pages: 1 -->
+<svg width="835pt" height="312pt"
+ viewBox="0.00 0.00 834.93 311.74" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 307.74)">
+<title>GrafoPrincipal</title>
+<!-- start -->
+<g id="node1" class="node">
+<title>start</title>
+<ellipse fill="#e8e8e8" stroke="#888888" stroke-width="1.6" cx="384.93" cy="-276.87" rx="79.81" ry="26.74"/>
+<text text-anchor="middle" x="384.93" y="-280.67" font-family="Helvetica,Arial,sans-serif" font-size="14.00">INICIO</text>
+<text text-anchor="middle" x="384.93" y="-265.67" font-family="Helvetica,Arial,sans-serif" font-size="14.00">(topic, pasos=0)</text>
+</g>
+<!-- Supervisor -->
+<g id="node2" class="node">
+<title>Supervisor</title>
+<path fill="#fff3cd" stroke="#b8860b" stroke-width="1.6" d="M437.93,-213C437.93,-213 331.93,-213 331.93,-213 325.93,-213 319.93,-207 319.93,-201 319.93,-201 319.93,-156 319.93,-156 319.93,-150 325.93,-144 331.93,-144 331.93,-144 437.93,-144 437.93,-144 443.93,-144 449.93,-150 449.93,-156 449.93,-156 449.93,-201 449.93,-201 449.93,-207 443.93,-213 437.93,-213"/>
+<text text-anchor="middle" x="384.93" y="-197.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">Supervisor</text>
+<text text-anchor="middle" x="384.93" y="-166.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">decide quién actúa</text>
+<text text-anchor="middle" x="384.93" y="-151.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">+ cuenta pasos</text>
+</g>
+<!-- start&#45;&gt;Supervisor -->
+<g id="edge1" class="edge">
+<title>start&#45;&gt;Supervisor</title>
+<path fill="none" stroke="black" stroke-width="1.6" d="M384.93,-249.79C384.93,-241.61 384.93,-232.34 384.93,-223.29"/>
+<polygon fill="black" stroke="black" stroke-width="1.6" points="388.43,-223.22 384.93,-213.22 381.43,-223.22 388.43,-223.22"/>
+</g>
+<!-- Investigador -->
+<g id="node3" class="node">
+<title>Investigador</title>
+<path fill="#d4edda" stroke="#2e7d32" stroke-width="1.6" d="M179.93,-69C179.93,-69 65.93,-69 65.93,-69 59.93,-69 53.93,-63 53.93,-57 53.93,-57 53.93,-12 53.93,-12 53.93,-6 59.93,0 65.93,0 65.93,0 179.93,0 179.93,0 185.93,0 191.93,-6 191.93,-12 191.93,-12 191.93,-57 191.93,-57 191.93,-63 185.93,-69 179.93,-69"/>
+<text text-anchor="middle" x="122.93" y="-53.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">Investigador</text>
+<text text-anchor="middle" x="122.93" y="-22.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">buscar_noticias_ia()</text>
+<text text-anchor="middle" x="122.93" y="-7.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">(1 sola herramienta)</text>
+</g>
+<!-- Supervisor&#45;&gt;Investigador -->
+<g id="edge2" class="edge">
+<title>Supervisor&#45;&gt;Investigador</title>
+<path fill="none" stroke="#b8860b" stroke-width="1.6" stroke-dasharray="5,2" d="M319.75,-178.43C222.77,-178.27 47.62,-171.48 7.93,-126 -3.47,-112.94 -1.49,-101.55 7.93,-87 16.75,-73.39 30.1,-63.35 44.62,-55.94"/>
+<polygon fill="#b8860b" stroke="#b8860b" stroke-width="1.6" points="46.2,-59.07 53.78,-51.67 43.24,-52.72 46.2,-59.07"/>
+<text text-anchor="middle" x="108.43" y="-116.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;next_agent=&quot;Investigador&quot;</text>
+<text text-anchor="middle" x="108.43" y="-103.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;(todavía no hay investigación,</text>
+<text text-anchor="middle" x="108.43" y="-90.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;o el análisis anterior fue insuficiente)</text>
+</g>
+<!-- Analista -->
+<g id="node4" class="node">
+<title>Analista</title>
+<path fill="#cfe2f3" stroke="#1565c0" stroke-width="1.6" d="M495.43,-69C495.43,-69 316.43,-69 316.43,-69 310.43,-69 304.43,-63 304.43,-57 304.43,-57 304.43,-12 304.43,-12 304.43,-6 310.43,0 316.43,0 316.43,0 495.43,0 495.43,0 501.43,0 507.43,-6 507.43,-12 507.43,-12 507.43,-57 507.43,-57 507.43,-63 501.43,-69 495.43,-69"/>
+<text text-anchor="middle" x="405.93" y="-53.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">Analista</text>
+<text text-anchor="middle" x="405.93" y="-22.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">analizar_sentimiento_noticias()</text>
+<text text-anchor="middle" x="405.93" y="-7.8" font-family="Helvetica,Arial,sans-serif" font-size="14.00">(1 sola herramienta)</text>
+</g>
+<!-- Supervisor&#45;&gt;Analista -->
+<g id="edge3" class="edge">
+<title>Supervisor&#45;&gt;Analista</title>
+<path fill="none" stroke="#b8860b" stroke-width="1.6" stroke-dasharray="5,2" d="M382.45,-143.69C381.91,-126.56 382.36,-105.51 385.93,-87 386.45,-84.31 387.1,-81.58 387.85,-78.85"/>
+<polygon fill="#b8860b" stroke="#b8860b" stroke-width="1.6" points="391.27,-79.65 390.92,-69.06 384.59,-77.56 391.27,-79.65"/>
+<text text-anchor="middle" x="447.93" y="-116.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;next_agent=&quot;Analista&quot;</text>
+<text text-anchor="middle" x="447.93" y="-103.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;(hay investigación,</text>
+<text text-anchor="middle" x="447.93" y="-90.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;falta analizarla)</text>
+</g>
+<!-- fin -->
+<g id="node5" class="node">
+<title>fin</title>
+<ellipse fill="#e8e8e8" stroke="#888888" stroke-width="1.6" cx="657.93" cy="-34.5" rx="110.12" ry="26.74"/>
+<text text-anchor="middle" x="657.93" y="-38.3" font-family="Helvetica,Arial,sans-serif" font-size="14.00">FIN</text>
+<text text-anchor="middle" x="657.93" y="-23.3" font-family="Helvetica,Arial,sans-serif" font-size="14.00">(task_completed=True)</text>
+</g>
+<!-- Supervisor&#45;&gt;fin -->
+<g id="edge4" class="edge">
+<title>Supervisor&#45;&gt;fin</title>
+<path fill="none" stroke="#b8860b" stroke-width="1.6" stroke-dasharray="5,2" d="M449.99,-170.53C511.56,-162.71 598.26,-148.15 623.93,-126 639.87,-112.25 648.36,-90.24 652.86,-71.37"/>
+<polygon fill="#b8860b" stroke="#b8860b" stroke-width="1.6" points="656.29,-72.07 654.93,-61.57 649.44,-70.63 656.29,-72.07"/>
+<text text-anchor="middle" x="736.93" y="-116.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;next_agent=&quot;FINALIZAR&quot;</text>
+<text text-anchor="middle" x="736.93" y="-103.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;(análisis suficiente,</text>
+<text text-anchor="middle" x="736.93" y="-90.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;o se agotó el contador de pasos)</text>
+</g>
+<!-- Investigador&#45;&gt;Supervisor -->
+<g id="edge5" class="edge">
+<title>Investigador&#45;&gt;Supervisor</title>
+<path fill="none" stroke="#2e7d32" stroke-width="1.6" d="M183.41,-69.13C192.21,-74.75 200.97,-80.79 208.93,-87 228.26,-102.08 227.33,-112.72 247.93,-126 266.92,-138.24 289.23,-148.18 310.28,-155.96"/>
+<polygon fill="#2e7d32" stroke="#2e7d32" stroke-width="1.6" points="309.25,-159.3 319.85,-159.37 311.61,-152.71 309.25,-159.3"/>
+<text text-anchor="middle" x="313.43" y="-109.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;vuelve con</text>
+<text text-anchor="middle" x="313.43" y="-96.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;ResultadoInvestigacion</text>
+</g>
+<!-- Analista&#45;&gt;Supervisor -->
+<g id="edge6" class="edge">
+<title>Analista&#45;&gt;Supervisor</title>
+<path fill="none" stroke="#1565c0" stroke-width="1.6" d="M494.49,-69.39C500.49,-74.49 505.79,-80.32 509.93,-87 519.07,-101.73 519.57,-111.6 509.93,-126 498.2,-143.51 479.32,-155.08 459.75,-162.71"/>
+<polygon fill="#1565c0" stroke="#1565c0" stroke-width="1.6" points="458.35,-159.49 450.11,-166.15 460.71,-166.09 458.35,-159.49"/>
+<text text-anchor="middle" x="568.43" y="-109.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;vuelve con</text>
+<text text-anchor="middle" x="568.43" y="-96.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;ResultadoAnalisis</text>
+</g>
+</g>
+</svg>
+
+      </div>
+      <div class="legend">
+        <span class="item"><span class="swatch sw-gris"></span> Inicio / fin del proceso</span>
+        <span class="item"><span class="swatch sw-amarillo"></span> Supervisor (decide y cuenta pasos)</span>
+        <span class="item"><span class="swatch sw-verde"></span> Investigador (busca noticias)</span>
+        <span class="item"><span class="swatch sw-azul"></span> Analista (evalúa sentimiento)</span>
+      </div>
+    </div>
+
+    <h3>Cómo leer este diagrama</h3>
+    <ul class="steps">
+      <li>Las flechas <strong>punteadas</strong> que salen del Supervisor son
+      la única arista <em>condicional</em> del grafo: hacia dónde van
+      depende del valor de <code>next_agent</code>, que a su vez viene de
+      una decisión estructurada (no texto libre) con solo 3 valores
+      posibles: <code>"Investigador"</code>, <code>"Analista"</code> o
+      <code>"FINALIZAR"</code>.</li>
+      <li>Las flechas <strong>sólidas</strong> que vuelven de los
+      especialistas al Supervisor son aristas fijas: un especialista
+      siempre vuelve al Supervisor, nunca decide por su cuenta que terminó
+      ni le pasa el control directamente al otro especialista.</li>
+      <li>El Supervisor puede mandar al Investigador <strong>más de una
+      vez</strong> antes de llegar al Analista (ver sección 2) -- por eso
+      es un grafo con ciclos, no una secuencia lineal.</li>
+    </ul>
+  </section>
+
+  <section id="refinamiento">
+    <h2>2. El ciclo de refinamiento, paso a paso</h2>
+    <p>
+      Este es el escenario más interesante del sistema: ¿qué pasa si la
+      primera búsqueda no encuentra ninguna noticia? En vez de rendirse,
+      el Supervisor manda de nuevo al Investigador, que amplía
+      automáticamente el término de búsqueda. El diagrama siguiente traza
+      exactamente ese recorrido, con los valores reales que toma el estado
+      compartido en cada paso.
+    </p>
+    <div class="panel">
+      <div class="diagram">
+        <!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: EscenarioRefinamiento Pages: 1 -->
+<svg width="517pt" height="818pt"
+ viewBox="0.00 0.00 516.50 818.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 814)">
+<title>EscenarioRefinamiento</title>
+<!-- p1 -->
+<g id="node1" class="node">
+<title>p1</title>
+<path fill="#fff3cd" stroke="#b8860b" stroke-width="1.4" d="M194,-799.5C194,-799.5 79,-799.5 79,-799.5 73,-799.5 67,-793.5 67,-787.5 67,-787.5 67,-764.5 67,-764.5 67,-758.5 73,-752.5 79,-752.5 79,-752.5 194,-752.5 194,-752.5 200,-752.5 206,-758.5 206,-764.5 206,-764.5 206,-787.5 206,-787.5 206,-793.5 200,-799.5 194,-799.5"/>
+<text text-anchor="middle" x="136.5" y="-785.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 1 &#45;&#45; Supervisor</text>
+<text text-anchor="middle" x="136.5" y="-772.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">investigacion=None</text>
+<text text-anchor="middle" x="136.5" y="-759.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ decide: Investigador</text>
+</g>
+<!-- p2 -->
+<g id="node2" class="node">
+<title>p2</title>
+<path fill="#d4edda" stroke="#2e7d32" stroke-width="1.4" d="M242.5,-706C242.5,-706 30.5,-706 30.5,-706 24.5,-706 18.5,-700 18.5,-694 18.5,-694 18.5,-658 18.5,-658 18.5,-652 24.5,-646 30.5,-646 30.5,-646 242.5,-646 242.5,-646 248.5,-646 254.5,-652 254.5,-658 254.5,-658 254.5,-694 254.5,-694 254.5,-700 248.5,-706 242.5,-706"/>
+<text text-anchor="middle" x="136.5" y="-692.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 1 &#45;&#45; Investigador</text>
+<text text-anchor="middle" x="136.5" y="-679.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">busca &quot;blockchain cuántico&quot;</text>
+<text text-anchor="middle" x="136.5" y="-666.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ 0 noticias encontradas</text>
+<text text-anchor="middle" x="136.5" y="-653.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">investigacion={0 noticias}, analisis=None</text>
+</g>
+<!-- p1&#45;&gt;p2 -->
+<g id="edge1" class="edge">
+<title>p1&#45;&gt;p2</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-752.27C136.5,-741.69 136.5,-728.78 136.5,-716.67"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-716.3 136.5,-706.3 133,-716.3 140,-716.3"/>
+</g>
+<!-- p3 -->
+<g id="node3" class="node">
+<title>p3</title>
+<path fill="#fff3cd" stroke="#b8860b" stroke-width="1.4" d="M227.5,-610C227.5,-610 45.5,-610 45.5,-610 39.5,-610 33.5,-604 33.5,-598 33.5,-598 33.5,-575 33.5,-575 33.5,-569 39.5,-563 45.5,-563 45.5,-563 227.5,-563 227.5,-563 233.5,-563 239.5,-569 239.5,-575 239.5,-575 239.5,-598 239.5,-598 239.5,-604 233.5,-610 227.5,-610"/>
+<text text-anchor="middle" x="136.5" y="-596.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 2 &#45;&#45; Supervisor</text>
+<text text-anchor="middle" x="136.5" y="-583.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">investigacion≠None, analisis=None</text>
+<text text-anchor="middle" x="136.5" y="-570.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ decide: Analista</text>
+</g>
+<!-- p2&#45;&gt;p3 -->
+<g id="edge2" class="edge">
+<title>p2&#45;&gt;p3</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-645.86C136.5,-637.68 136.5,-628.73 136.5,-620.35"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-620.15 136.5,-610.15 133,-620.15 140,-620.15"/>
+</g>
+<!-- p4 -->
+<g id="node4" class="node">
+<title>p4</title>
+<path fill="#cfe2f3" stroke="#1565c0" stroke-width="1.4" d="M204,-527C204,-527 69,-527 69,-527 63,-527 57,-521 57,-515 57,-515 57,-479 57,-479 57,-473 63,-467 69,-467 69,-467 204,-467 204,-467 210,-467 216,-473 216,-479 216,-479 216,-515 216,-515 216,-521 210,-527 204,-527"/>
+<text text-anchor="middle" x="136.5" y="-513.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 2 &#45;&#45; Analista</text>
+<text text-anchor="middle" x="136.5" y="-500.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">0 noticias → short&#45;circuit</text>
+<text text-anchor="middle" x="136.5" y="-487.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">(ni siquiera llama al LLM)</text>
+<text text-anchor="middle" x="136.5" y="-474.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">analisis={suficiente=False}</text>
+</g>
+<!-- p3&#45;&gt;p4 -->
+<g id="edge3" class="edge">
+<title>p3&#45;&gt;p4</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-562.97C136.5,-555.11 136.5,-546.04 136.5,-537.22"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-537.07 136.5,-527.07 133,-537.07 140,-537.07"/>
+</g>
+<!-- p5 -->
+<g id="node5" class="node">
+<title>p5</title>
+<path fill="#fff3cd" stroke="#b8860b" stroke-width="1.4" d="M219,-431C219,-431 54,-431 54,-431 48,-431 42,-425 42,-419 42,-419 42,-396 42,-396 42,-390 48,-384 54,-384 54,-384 219,-384 219,-384 225,-384 231,-390 231,-396 231,-396 231,-419 231,-419 231,-425 225,-431 219,-431"/>
+<text text-anchor="middle" x="136.5" y="-417.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 3 &#45;&#45; Supervisor</text>
+<text text-anchor="middle" x="136.5" y="-404.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">analisis.suficiente=False</text>
+<text text-anchor="middle" x="136.5" y="-391.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ decide: Investigador (¡refinar!)</text>
+</g>
+<!-- p4&#45;&gt;p5 -->
+<g id="edge4" class="edge">
+<title>p4&#45;&gt;p5</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-466.86C136.5,-458.68 136.5,-449.73 136.5,-441.35"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-441.15 136.5,-431.15 133,-441.15 140,-441.15"/>
+</g>
+<!-- p6 -->
+<g id="node6" class="node">
+<title>p6</title>
+<path fill="#d4edda" stroke="#2e7d32" stroke-width="2.4" d="M219.5,-348C219.5,-348 53.5,-348 53.5,-348 47.5,-348 41.5,-342 41.5,-336 41.5,-336 41.5,-274 41.5,-274 41.5,-268 47.5,-262 53.5,-262 53.5,-262 219.5,-262 219.5,-262 225.5,-262 231.5,-268 231.5,-274 231.5,-274 231.5,-336 231.5,-336 231.5,-342 225.5,-348 219.5,-348"/>
+<text text-anchor="middle" x="136.5" y="-334.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 3 &#45;&#45; Investigador</text>
+<text text-anchor="middle" x="136.5" y="-321.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">detecta analisis.suficiente=False</text>
+<text text-anchor="middle" x="136.5" y="-308.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ amplía término a &quot;ia&quot;</text>
+<text text-anchor="middle" x="136.5" y="-295.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ 5 noticias encontradas</text>
+<text text-anchor="middle" x="136.5" y="-282.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">investigacion={5 noticias}</text>
+<text text-anchor="middle" x="136.5" y="-269.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">⚠ analisis se resetea a None</text>
+</g>
+<!-- p5&#45;&gt;p6 -->
+<g id="edge5" class="edge">
+<title>p5&#45;&gt;p6</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-383.95C136.5,-376.29 136.5,-367.39 136.5,-358.4"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-358.27 136.5,-348.27 133,-358.27 140,-358.27"/>
+</g>
+<!-- p7 -->
+<g id="node7" class="node">
+<title>p7</title>
+<path fill="#fff3cd" stroke="#b8860b" stroke-width="1.4" d="M230,-226C230,-226 43,-226 43,-226 37,-226 31,-220 31,-214 31,-214 31,-178 31,-178 31,-172 37,-166 43,-166 43,-166 230,-166 230,-166 236,-166 242,-172 242,-178 242,-178 242,-214 242,-214 242,-220 236,-226 230,-226"/>
+<text text-anchor="middle" x="136.5" y="-212.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 4 &#45;&#45; Supervisor</text>
+<text text-anchor="middle" x="136.5" y="-199.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">investigacion≠None, analisis=None</text>
+<text text-anchor="middle" x="136.5" y="-186.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ decide: Analista</text>
+<text text-anchor="middle" x="136.5" y="-173.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">(gracias al reseteo del paso anterior)</text>
+</g>
+<!-- p6&#45;&gt;p7 -->
+<g id="edge6" class="edge">
+<title>p6&#45;&gt;p7</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-261.71C136.5,-253.33 136.5,-244.57 136.5,-236.29"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-236.14 136.5,-226.14 133,-236.14 140,-236.14"/>
+</g>
+<!-- nota -->
+<g id="node10" class="node">
+<title>nota</title>
+<polygon fill="#fdecea" stroke="#c62828" stroke-width="1.4" points="502.5,-810 224.5,-810 224.5,-742 508.5,-742 508.5,-804 502.5,-810"/>
+<polyline fill="none" stroke="#c62828" stroke-width="1.4" points="502.5,-810 502.5,-804 "/>
+<polyline fill="none" stroke="#c62828" stroke-width="1.4" points="508.5,-804 502.5,-804 "/>
+<text text-anchor="middle" x="366.5" y="-797.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00">Si el Investigador NO resetea &quot;analisis&quot; en el paso 3,</text>
+<text text-anchor="middle" x="366.5" y="-785.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00">el Supervisor del paso 4 seguiría viendo el</text>
+<text text-anchor="middle" x="366.5" y="-773.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00">analisis.suficiente=False VIEJO (de la noticia 0)</text>
+<text text-anchor="middle" x="366.5" y="-761.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00">y volvería a mandar al Investigador en bucle,</text>
+<text text-anchor="middle" x="366.5" y="-749.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00">en vez de pasar al Analista con los 5 resultados nuevos.</text>
+</g>
+<!-- p6&#45;&gt;nota -->
+<g id="edge9" class="edge">
+<title>p6&#45;&gt;nota</title>
+<path fill="none" stroke="#c62828" stroke-width="1.4" stroke-dasharray="1,5" d="M204.6,-348.14C217.55,-358.58 230.01,-370.66 239.5,-384 321.53,-499.3 352.67,-670.51 362.55,-741.89"/>
+</g>
+<!-- p8 -->
+<g id="node8" class="node">
+<title>p8</title>
+<path fill="#cfe2f3" stroke="#1565c0" stroke-width="1.4" d="M261,-130C261,-130 12,-130 12,-130 6,-130 0,-124 0,-118 0,-118 0,-95 0,-95 0,-89 6,-83 12,-83 12,-83 261,-83 261,-83 267,-83 273,-89 273,-95 273,-95 273,-118 273,-118 273,-124 267,-130 261,-130"/>
+<text text-anchor="middle" x="136.5" y="-116.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 4 &#45;&#45; Analista</text>
+<text text-anchor="middle" x="136.5" y="-103.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">5 noticias → sí llama al LLM</text>
+<text text-anchor="middle" x="136.5" y="-90.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">analisis={suficiente=True, sentimiento=&quot;neutral&quot;}</text>
+</g>
+<!-- p7&#45;&gt;p8 -->
+<g id="edge7" class="edge">
+<title>p7&#45;&gt;p8</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-165.86C136.5,-157.68 136.5,-148.73 136.5,-140.35"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-140.15 136.5,-130.15 133,-140.15 140,-140.15"/>
+</g>
+<!-- p9 -->
+<g id="node9" class="node">
+<title>p9</title>
+<path fill="#e8e8e8" stroke="#888888" stroke-width="1.4" d="M195.5,-47C195.5,-47 77.5,-47 77.5,-47 71.5,-47 65.5,-41 65.5,-35 65.5,-35 65.5,-12 65.5,-12 65.5,-6 71.5,0 77.5,0 77.5,0 195.5,0 195.5,0 201.5,0 207.5,-6 207.5,-12 207.5,-12 207.5,-35 207.5,-35 207.5,-41 201.5,-47 195.5,-47"/>
+<text text-anchor="middle" x="136.5" y="-33.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">Paso 5 &#45;&#45; Supervisor</text>
+<text text-anchor="middle" x="136.5" y="-20.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">analisis.suficiente=True</text>
+<text text-anchor="middle" x="136.5" y="-7.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">→ decide: FINALIZAR</text>
+</g>
+<!-- p8&#45;&gt;p9 -->
+<g id="edge8" class="edge">
+<title>p8&#45;&gt;p9</title>
+<path fill="none" stroke="#666666" stroke-width="1.4" d="M136.5,-82.94C136.5,-75.02 136.5,-65.95 136.5,-57.36"/>
+<polygon fill="#666666" stroke="#666666" stroke-width="1.4" points="140,-57.22 136.5,-47.22 133,-57.22 140,-57.22"/>
+</g>
+</g>
+</svg>
+
+      </div>
+      <div class="legend">
+        <span class="item"><span class="swatch sw-amarillo"></span> Decisión del Supervisor</span>
+        <span class="item"><span class="swatch sw-verde"></span> Acción del Investigador</span>
+        <span class="item"><span class="swatch sw-azul"></span> Acción del Analista</span>
+        <span class="item"><span class="swatch sw-rojo"></span> Qué pasaría sin el detalle marcado con ⚠</span>
+      </div>
+    </div>
+
+    <h3>Por qué el recuadro marcado con ⚠ es la parte más importante</h3>
+    <div class="callout">
+      La primera versión de este código tenía un bug real acá: cuando el
+      Investigador vuelve a buscar con el término ampliado, si no se borra
+      el <code>analisis</code> viejo (el de la búsqueda que no encontró
+      nada), el Supervisor del paso siguiente sigue viendo
+      <code>analisis.suficiente = False</code> y manda <em>otra vez</em> al
+      Investigador en vez de pasar al Analista con los resultados nuevos
+      -- quedando atascado en un bucle de "refinamiento" que nunca llega a
+      analizar nada.
+    </div>
+    <div class="callout good">
+      La corrección es simple pero crítica: cada vez que el Investigador
+      produce una investigación nueva, el nodo del grafo también resetea
+      <code>analisis</code> a <code>None</code> en el mismo paso -- porque
+      ese análisis viejo pertenecía a la búsqueda vieja, no a la nueva. Así
+      el Supervisor del paso siguiente ve correctamente "hay investigación
+      nueva, todavía no hay análisis de ella" y manda al Analista.
+    </div>
+  </section>
+
+  <section id="estado">
+    <h2>3. Estado compartido y validación con Pydantic</h2>
+    <p>
+      Nada de lo que circula entre los nodos es texto libre: cada
+      resultado intermedio es un modelo <strong>Pydantic</strong> con
+      tipos y rangos explícitos. Si una herramienta devolviera, por
+      ejemplo, un puntaje de sentimiento de 1.4 (fuera del rango 0-1), la
+      validación lo rechaza antes de que ese dato corrupto llegue a
+      ningún otro nodo del grafo.
+    </p>
+    <div class="panel">
+      <div class="diagram">
+        <!-- Generated by graphviz version 2.43.0 (0)
+ -->
+<!-- Title: EstadoYDatos Pages: 1 -->
+<svg width="1036pt" height="294pt"
+ viewBox="0.00 0.00 1036.00 293.50" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 289.5)">
+<title>EstadoYDatos</title>
+<g id="clust1" class="cluster">
+<title>cluster_estado</title>
+<path fill="#f5f5f5" stroke="#999999" d="M22,-58C22,-58 302,-58 302,-58 308,-58 314,-64 314,-70 314,-70 314,-184 314,-184 314,-190 308,-196 302,-196 302,-196 22,-196 22,-196 16,-196 10,-190 10,-184 10,-184 10,-70 10,-70 10,-64 16,-58 22,-58"/>
+<text text-anchor="middle" x="162" y="-181.6" font-family="Helvetica,Arial,sans-serif" font-size="13.00">AgentState (estado compartido, vive en el grafo)</text>
+</g>
+<g id="clust2" class="cluster">
+<title>cluster_investigacion</title>
+<path fill="#eaf6ec" stroke="#2e7d32" d="M518,-128C518,-128 1008,-128 1008,-128 1014,-128 1020,-134 1020,-140 1020,-140 1020,-228 1020,-228 1020,-234 1014,-240 1008,-240 1008,-240 518,-240 518,-240 512,-240 506,-234 506,-228 506,-228 506,-140 506,-140 506,-134 512,-128 518,-128"/>
+<text text-anchor="middle" x="763" y="-225.6" font-family="Helvetica,Arial,sans-serif" font-size="13.00">ResultadoInvestigacion (Pydantic)</text>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_analisis</title>
+<path fill="#eaf1fb" stroke="#1565c0" d="M474,-8C474,-8 1001,-8 1001,-8 1007,-8 1013,-14 1013,-20 1013,-20 1013,-108 1013,-108 1013,-114 1007,-120 1001,-120 1001,-120 474,-120 474,-120 468,-120 462,-114 462,-108 462,-108 462,-20 462,-20 462,-14 468,-8 474,-8"/>
+<text text-anchor="middle" x="737.5" y="-105.6" font-family="Helvetica,Arial,sans-serif" font-size="13.00">ResultadoAnalisis (Pydantic)</text>
+</g>
+<!-- estado -->
+<g id="node1" class="node">
+<title>estado</title>
+<path fill="#ffffff" stroke="#999999" stroke-width="1.4" d="M284,-165.5C284,-165.5 39,-165.5 39,-165.5 33,-165.5 27,-159.5 27,-153.5 27,-153.5 27,-78.5 27,-78.5 27,-72.5 33,-66.5 39,-66.5 39,-66.5 284,-66.5 284,-66.5 290,-66.5 296,-72.5 296,-78.5 296,-78.5 296,-153.5 296,-153.5 296,-159.5 290,-165.5 284,-165.5"/>
+<text text-anchor="middle" x="161.5" y="-151.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">topic: str</text>
+<text text-anchor="middle" x="161.5" y="-138.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">next_agent: str</text>
+<text text-anchor="middle" x="161.5" y="-125.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">task_completed: bool</text>
+<text text-anchor="middle" x="161.5" y="-112.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">pasos: int</text>
+<text text-anchor="middle" x="161.5" y="-99.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">investigacion: Optional[ResultadoInvestigacion]</text>
+<text text-anchor="middle" x="161.5" y="-86.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">analisis: Optional[ResultadoAnalisis]</text>
+<text text-anchor="middle" x="161.5" y="-73.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">messages: list (heredado de MessagesState)</text>
+</g>
+<!-- investigacion -->
+<g id="node2" class="node">
+<title>investigacion</title>
+<path fill="#ffffff" stroke="#2e7d32" stroke-width="1.4" d="M657,-210C657,-210 526,-210 526,-210 520,-210 514,-204 514,-198 514,-198 514,-148 514,-148 514,-142 520,-136 526,-136 526,-136 657,-136 657,-136 663,-136 669,-142 669,-148 669,-148 669,-198 669,-198 669,-204 663,-210 657,-210"/>
+<text text-anchor="middle" x="591.5" y="-196.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">tema_buscado: str</text>
+<text text-anchor="middle" x="591.5" y="-183.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">noticias: List[NoticiaIA]</text>
+<text text-anchor="middle" x="591.5" y="-156.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">@property</text>
+<text text-anchor="middle" x="591.5" y="-143.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">encontro_resultados: bool</text>
+</g>
+<!-- estado&#45;&gt;investigacion -->
+<g id="edge3" class="edge">
+<title>estado&#45;&gt;investigacion</title>
+<path fill="none" stroke="#2e7d32" stroke-width="1.3" d="M296.16,-133.8C363.86,-142.82 444.12,-153.51 503.71,-161.44"/>
+<polygon fill="#2e7d32" stroke="#2e7d32" stroke-width="1.3" points="503.46,-164.94 513.84,-162.79 504.39,-158 503.46,-164.94"/>
+<text text-anchor="middle" x="396.5" y="-155.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00"> &#160;campo &quot;investigacion&quot;</text>
+</g>
+<!-- analisis -->
+<g id="node4" class="node">
+<title>analisis</title>
+<path fill="#ffffff" stroke="#1565c0" stroke-width="1.4" d="M701,-89.5C701,-89.5 482,-89.5 482,-89.5 476,-89.5 470,-83.5 470,-77.5 470,-77.5 470,-28.5 470,-28.5 470,-22.5 476,-16.5 482,-16.5 482,-16.5 701,-16.5 701,-16.5 707,-16.5 713,-22.5 713,-28.5 713,-28.5 713,-77.5 713,-77.5 713,-83.5 707,-89.5 701,-89.5"/>
+<text text-anchor="middle" x="591.5" y="-75.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">sentimiento_general:</text>
+<text text-anchor="middle" x="591.5" y="-62.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00"> &#160;&quot;positivo&quot;|&quot;neutral&quot;|&quot;negativo&quot;|&quot;sin_datos&quot;</text>
+<text text-anchor="middle" x="591.5" y="-49.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">score_promedio: float (0..1)</text>
+<text text-anchor="middle" x="591.5" y="-36.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">detalle: List[AnalisisPorNoticia]</text>
+<text text-anchor="middle" x="591.5" y="-23.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">suficiente: bool</text>
+</g>
+<!-- estado&#45;&gt;analisis -->
+<g id="edge4" class="edge">
+<title>estado&#45;&gt;analisis</title>
+<path fill="none" stroke="#1565c0" stroke-width="1.3" d="M296.16,-96.33C348.35,-88.64 408,-79.86 459.89,-72.22"/>
+<polygon fill="#1565c0" stroke="#1565c0" stroke-width="1.3" points="460.44,-75.68 469.83,-70.76 459.42,-68.76 460.44,-75.68"/>
+<text text-anchor="middle" x="396.5" y="-91.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00"> &#160;campo &quot;analisis&quot;</text>
+</g>
+<!-- aislamiento -->
+<g id="node6" class="node">
+<title>aislamiento</title>
+<polygon fill="#fff8e1" stroke="#b8860b" stroke-width="1.4" points="317,-285.5 0,-285.5 0,-204.5 323,-204.5 323,-279.5 317,-285.5"/>
+<polyline fill="none" stroke="#b8860b" stroke-width="1.4" points="317,-285.5 317,-279.5 "/>
+<polyline fill="none" stroke="#b8860b" stroke-width="1.4" points="323,-279.5 317,-279.5 "/>
+<text text-anchor="middle" x="161.5" y="-272.7" font-family="Helvetica,Arial,sans-serif" font-size="11.00">Lo que REALMENTE recibe cada especialista</text>
+<text text-anchor="middle" x="161.5" y="-260.7" font-family="Helvetica,Arial,sans-serif" font-size="11.00">(nunca el AgentState completo):</text>
+<text text-anchor="middle" x="161.5" y="-235.7" font-family="Helvetica,Arial,sans-serif" font-size="11.00">Investigador ← HumanMessage(&quot;Buscá noticias sobre: {tema}&quot;)</text>
+<text text-anchor="middle" x="161.5" y="-223.7" font-family="Helvetica,Arial,sans-serif" font-size="11.00">Analista ← HumanMessage(lista de noticias en JSON)</text>
+<text text-anchor="middle" x="161.5" y="-211.7" font-family="Helvetica,Arial,sans-serif" font-size="11.00">Supervisor ← resumen de texto compacto (_resumen_estado)</text>
+</g>
+<!-- estado&#45;&gt;aislamiento -->
+<g id="edge5" class="edge">
+<title>estado&#45;&gt;aislamiento</title>
+<path fill="none" stroke="#b8860b" stroke-width="1.3" stroke-dasharray="1,5" d="M161.5,-165.63C161.5,-178.55 161.5,-191.47 161.5,-204.39"/>
+</g>
+<!-- noticia -->
+<g id="node3" class="node">
+<title>noticia</title>
+<path fill="#ffffff" stroke="#2e7d32" stroke-width="1.4" d="M1000,-209.5C1000,-209.5 831,-209.5 831,-209.5 825,-209.5 819,-203.5 819,-197.5 819,-197.5 819,-148.5 819,-148.5 819,-142.5 825,-136.5 831,-136.5 831,-136.5 1000,-136.5 1000,-136.5 1006,-136.5 1012,-142.5 1012,-148.5 1012,-148.5 1012,-197.5 1012,-197.5 1012,-203.5 1006,-209.5 1000,-209.5"/>
+<text text-anchor="middle" x="915.5" y="-195.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">NoticiaIA</text>
+<text text-anchor="middle" x="915.5" y="-182.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· titular: str</text>
+<text text-anchor="middle" x="915.5" y="-169.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· fuente: str</text>
+<text text-anchor="middle" x="915.5" y="-156.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· fecha: str</text>
+<text text-anchor="middle" x="915.5" y="-143.9" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· resumen: str (min 10 caracteres)</text>
+</g>
+<!-- investigacion&#45;&gt;noticia -->
+<g id="edge1" class="edge">
+<title>investigacion&#45;&gt;noticia</title>
+<path fill="none" stroke="#2e7d32" stroke-width="1.3" stroke-dasharray="5,2" d="M669.22,-173C710.9,-173 763.07,-173 808.57,-173"/>
+<polygon fill="#2e7d32" stroke="#2e7d32" stroke-width="1.3" points="808.77,-176.5 818.77,-173 808.77,-169.5 808.77,-176.5"/>
+<text text-anchor="middle" x="766" y="-176.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00"> &#160;contiene 0..N</text>
+</g>
+<!-- detalle -->
+<g id="node5" class="node">
+<title>detalle</title>
+<path fill="#ffffff" stroke="#1565c0" stroke-width="1.4" d="M993,-83C993,-83 838,-83 838,-83 832,-83 826,-77 826,-71 826,-71 826,-35 826,-35 826,-29 832,-23 838,-23 838,-23 993,-23 993,-23 999,-23 1005,-29 1005,-35 1005,-35 1005,-71 1005,-71 1005,-77 999,-83 993,-83"/>
+<text text-anchor="middle" x="915.5" y="-69.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">AnalisisPorNoticia</text>
+<text text-anchor="middle" x="915.5" y="-56.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· titular: str</text>
+<text text-anchor="middle" x="915.5" y="-43.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· sentimiento: Literal(3 valores)</text>
+<text text-anchor="middle" x="915.5" y="-30.4" font-family="Helvetica,Arial,sans-serif" font-size="12.00">· score: float (0..1)</text>
+</g>
+<!-- analisis&#45;&gt;detalle -->
+<g id="edge2" class="edge">
+<title>analisis&#45;&gt;detalle</title>
+<path fill="none" stroke="#1565c0" stroke-width="1.3" stroke-dasharray="5,2" d="M713.32,-53C746.97,-53 783.13,-53 815.38,-53"/>
+<polygon fill="#1565c0" stroke="#1565c0" stroke-width="1.3" points="815.7,-56.5 825.7,-53 815.7,-49.5 815.7,-56.5"/>
+<text text-anchor="middle" x="766" y="-56.2" font-family="Helvetica,Arial,sans-serif" font-size="11.00"> &#160;contiene 0..N</text>
+</g>
+</g>
+</svg>
+
+      </div>
+      <div class="legend">
+        <span class="item"><span class="swatch sw-gris"></span> Estado compartido (AgentState)</span>
+        <span class="item"><span class="swatch sw-verde"></span> Artefacto del Investigador</span>
+        <span class="item"><span class="swatch sw-azul"></span> Artefacto del Analista</span>
+        <span class="item"><span class="swatch sw-amarillo"></span> Qué ve cada agente en realidad</span>
+      </div>
+    </div>
+    <h3>El detalle que evita la "Contaminación de Contexto"</h3>
+    <p>
+      El recuadro punteado de abajo a la derecha es la clave de otro de los
+      errores que este diseño evita deliberadamente: ningún especialista
+      recibe jamás el <code>AgentState</code> completo ni el historial de
+      mensajes de la conversación entera. El Investigador solo recibe la
+      instrucción puntual de qué buscar; el Analista, solo la lista exacta
+      de noticias a evaluar; y el propio Supervisor, en vez de leer todos
+      los mensajes previos, recibe un resumen de texto compacto generado a
+      partir de los campos estructurados del estado.
+    </p>
+  </section>
+
+  <section id="resumen">
+    <h2>4. Resumen de decisiones de diseño</h2>
+    <table>
+      <tr><th>Decisión</th><th>Por qué</th></tr>
+      <tr>
+        <td>Topología jerárquica (Supervisor + especialistas), no un pipeline fijo</td>
+        <td>La cantidad de ciclos de investigación necesarios no se sabe de antemano -- depende de si se encuentran noticias o no.</td>
+      </tr>
+      <tr>
+        <td>Contador de pasos (<code>pasos</code> / <code>MAX_PASOS</code>) con corte forzado en el Supervisor</td>
+        <td>Protección explícita contra el "Supervisor Infinito": si algo sale mal (o un Supervisor "roto" siempre pide más investigación), el grafo termina igual en vez de colgarse.</td>
+      </tr>
+      <tr>
+        <td>Reseteo de <code>analisis</code> cada vez que corre el Investigador</td>
+        <td>Evita que un análisis insuficiente "viejo" bloquee el avance del ciclo de refinamiento una vez que la nueva búsqueda sí trae resultados.</td>
+      </tr>
+      <tr>
+        <td>Cada especialista recibe solo una instrucción puntual, nunca el historial completo</td>
+        <td>Evita la "Contaminación de Contexto": cada agente solo necesita saber su propia tarea, no releer toda la conversación.</td>
+      </tr>
+      <tr>
+        <td>Resultados validados con Pydantic (<code>ResultadoInvestigacion</code>, <code>ResultadoAnalisis</code>)</td>
+        <td>Un dato mal formado (ej. un score fuera de rango) se rechaza antes de propagarse al resto del grafo.</td>
+      </tr>
+    </table>
+  </section>
+
+  <footer>
+    Generado para la Pre-entrega 6 del curso de AI Engineering (Coderhouse).
+    Diagramas construidos con Graphviz a partir de la implementación real
+    en <code>graph.py</code>, <code>state.py</code> y <code>agents/</code>.
+  </footer>
+
+</div>
+</body>
+</html>
